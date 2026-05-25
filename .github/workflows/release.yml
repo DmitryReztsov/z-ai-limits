@@ -1,0 +1,63 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      sha256: ${{ steps.sha.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -project ZAILimitsMonitor.xcodeproj \
+            -scheme ZAILimitsMonitor \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGN_STYLE=Manual
+
+      - name: Archive .app
+        run: |
+          mkdir -p dist
+          cp -R build/Build/Products/Release/ZAILimitsMonitor.app dist/
+          cd dist
+          zip -r ZAILimitsMonitor.zip ZAILimitsMonitor.app
+
+      - name: Get version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Get SHA256
+        id: sha
+        run: echo "sha256=$(shasum -a 256 dist/ZAILimitsMonitor.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ZAILimitsMonitor.zip
+          generate_release_notes: true
+
+      - name: Update Homebrew tap
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.TAP_PAT }}
+          repository: DmitryReztsov/homebrew-tap
+          event-type: update-cask
+          client-payload: '{"version": "${{ steps.version.outputs.version }}", "sha256": "${{ steps.sha.outputs.sha256 }}"}'
