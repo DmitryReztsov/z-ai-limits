@@ -35,7 +35,7 @@ struct SettingsView: View {
                     }
                 }
                 .buttonStyle(.bordered)
-                .tint(.red)
+                .tint(Color(uiColor: UIColor(named: "brandPrimary") ?? .red))
 
                 if !saveMessage.isEmpty {
                     Text(saveMessage)
