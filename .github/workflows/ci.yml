@@ -46,8 +46,12 @@ jobs:
 
       - name: Create tag
         run: |
-          git tag "v${{ steps.version.outputs.version }}" || true
-          git push origin "v${{ steps.version.outputs.version }}" || true
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "Tag v${{ steps.version.outputs.version }} already exists, skipping"
+            exit 1
+          fi
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
 
     outputs:
       version: ${{ steps.version.outputs.version }}
