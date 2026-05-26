@@ -10,43 +10,7 @@ permissions:
   actions: write
 
 jobs:
-  build:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        run: xcodegen generate
-
-      - name: Build
-        run: |
-          xcodebuild build \
-            -project ZAILimitsMonitor.xcodeproj \
-            -scheme ZAILimitsMonitor \
-            -configuration Release \
-            -derivedDataPath build \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGN_STYLE=Manual
-
-      - name: Archive .app
-        run: |
-          mkdir -p dist
-          cp -R build/Build/Products/Release/ZAILimitsMonitor.app dist/
-          cd dist
-          zip -r ZAILimitsMonitor.zip ZAILimitsMonitor.app
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app-archive
-          path: dist/ZAILimitsMonitor.zip
-
   version:
-    needs: build
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -85,14 +49,47 @@ jobs:
           git tag "v${{ steps.version.outputs.version }}"
           git push origin "v${{ steps.version.outputs.version }}"
 
-      - name: Set version output
-        run: echo "version=${{ steps.version.outputs.version }}" >> "$GITHUB_ENV"
-
     outputs:
       version: ${{ steps.version.outputs.version }}
 
-  release:
+  build:
     needs: version
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.version.outputs.version }}
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -project ZAILimitsMonitor.xcodeproj \
+            -scheme ZAILimitsMonitor \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGN_STYLE=Manual
+
+      - name: Archive .app
+        run: |
+          mkdir -p dist
+          cp -R build/Build/Products/Release/ZAILimitsMonitor.app dist/
+          cd dist
+          zip -r ZAILimitsMonitor.zip ZAILimitsMonitor.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-archive
+          path: dist/ZAILimitsMonitor.zip
+
+  release:
+    needs: [version, build]
     runs-on: macos-15
     steps:
       - uses: actions/download-artifact@v4
