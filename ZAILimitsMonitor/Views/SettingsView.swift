@@ -60,19 +60,19 @@ struct SettingsView: View {
                 }
             }
 
-            Spacer()
-
             HStack {
-                Spacer()
                 Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?.?.?")")
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
+                Spacer()
                 Button("Exit") {
                     NSApplication.shared.terminate(nil)
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
             }
+
+            Spacer()
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
