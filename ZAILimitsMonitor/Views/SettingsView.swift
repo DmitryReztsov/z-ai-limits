@@ -72,10 +72,9 @@ struct SettingsView: View {
                 .tint(.red)
             }
 
-            Spacer()
         }
         .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
         .onAppear {
             apiKey = viewModel.loadApiKey()
         }
