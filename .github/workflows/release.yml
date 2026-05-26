@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
 
 permissions:
   contents: write
@@ -14,11 +12,10 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      sha256: ${{ steps.sha.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -43,38 +40,42 @@ jobs:
           cd dist
           zip -r ZAILimitsMonitor.zip ZAILimitsMonitor.app
 
-      - name: Get version
+      - name: Bump version
         id: version
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          LATEST=$(git tag --sort=-version:refname | head -1)
+          if [ -z "$LATEST" ]; then
+            VERSION="1.0.0"
           else
-            echo "version=$(git rev-list --count HEAD).0.0" >> "$GITHUB_OUTPUT"
+            MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
+            MINOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f2)
+            PATCH=$(echo "$LATEST" | sed 's/v//' | cut -d. -f3)
+            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
           fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
 
       - name: Get SHA256
         id: sha
         run: echo "sha256=$(shasum -a 256 dist/ZAILimitsMonitor.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.version }}
           files: dist/ZAILimitsMonitor.zip
           generate_release_notes: true
 
       - name: Update Homebrew tap
-        if: startsWith(github.ref, 'refs/tags/')
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.TAP_PAT }}
           repository: DmitryReztsov/homebrew-tap
           event-type: update-cask
           client-payload: '{"version": "${{ steps.version.outputs.version }}", "sha256": "${{ steps.sha.outputs.sha256 }}"}'
-
-      - name: Upload artifact
-        if: "!startsWith(github.ref, 'refs/tags/')"
-        uses: actions/upload-artifact@v4
-        with:
-          name: ZAILimitsMonitor.zip
-          path: dist/ZAILimitsMonitor.zip

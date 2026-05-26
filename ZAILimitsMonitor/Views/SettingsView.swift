@@ -64,6 +64,9 @@ struct SettingsView: View {
 
             HStack {
                 Spacer()
+                Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?.?.?")")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
                 Button("Exit") {
                     NSApplication.shared.terminate(nil)
                 }
