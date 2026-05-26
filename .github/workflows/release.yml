@@ -57,15 +57,24 @@ jobs:
         run: echo "sha256=$(shasum -a 256 dist/ZAILimitsMonitor.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/ZAILimitsMonitor.zip
           generate_release_notes: true
 
       - name: Update Homebrew tap
+        if: startsWith(github.ref, 'refs/tags/')
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.TAP_PAT }}
           repository: DmitryReztsov/homebrew-tap
           event-type: update-cask
           client-payload: '{"version": "${{ steps.version.outputs.version }}", "sha256": "${{ steps.sha.outputs.sha256 }}"}'
+
+      - name: Upload artifact
+        if: "!startsWith(github.ref, 'refs/tags/')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAILimitsMonitor.zip
+          path: dist/ZAILimitsMonitor.zip
