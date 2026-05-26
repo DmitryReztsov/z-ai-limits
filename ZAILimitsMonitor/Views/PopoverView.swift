@@ -93,6 +93,7 @@ struct PopoverView: View {
             }
         }
         .frame(width: 320)
+        .compositingGroup()
         .onAppear {
             viewModel.startAutoRefresh()
         }
