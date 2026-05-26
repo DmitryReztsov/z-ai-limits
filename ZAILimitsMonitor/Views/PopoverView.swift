@@ -81,7 +81,7 @@ struct PopoverView: View {
     @State private var showSettings = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             header
 
             Divider()
