@@ -1,9 +1,9 @@
 name: Build, Version & Release
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types:
+      - closed
 
 permissions:
   contents: write
@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   version:
+    if: github.event.pull_request.merged == true
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +58,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
 
   build:
+    if: github.event.pull_request.merged == true
     needs: version
     runs-on: macos-26
     steps:
@@ -96,6 +98,7 @@ jobs:
           path: dist/ZAILimitsMonitor.zip
 
   release:
+    if: github.event.pull_request.merged == true
     needs: [version, build]
     runs-on: macos-26
     steps:
