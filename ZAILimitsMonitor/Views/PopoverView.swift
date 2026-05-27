@@ -93,8 +93,8 @@ struct PopoverView: View {
             }
         }
         .frame(width: 320)
-        .background(.regularMaterial)
-        .compositingGroup()
+        .background(Color(nsColor: .windowBackgroundColor))
+        .environment(\.colorScheme, .light)
         .onAppear {
             viewModel.startAutoRefresh()
         }
@@ -126,7 +126,7 @@ struct PopoverView: View {
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(Color.accentColor.opacity(0.15))
+                        .background(Color.blue.opacity(0.15))
                         .clipShape(Capsule())
                         .foregroundStyle(.secondary)
                 }
