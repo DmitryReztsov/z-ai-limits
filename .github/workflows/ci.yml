@@ -38,7 +38,12 @@ jobs:
             MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
             MINOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f2)
             PATCH=$(echo "$LATEST" | sed 's/v//' | cut -d. -f3)
-            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            BRANCH_TYPE="${{ steps.branch.outputs.branch_type }}"
+            if [ "$BRANCH_TYPE" = "feat" ]; then
+              VERSION="$MAJOR.$((MINOR + 1)).0"
+            else
+              VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
