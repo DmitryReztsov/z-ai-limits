@@ -86,8 +86,8 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGN_STYLE=Manual \
-            CFBundleShortVersionString="${{ needs.version.outputs.version }}" \
-            CFBundleVersion="${{ needs.version.outputs.version }}"
+            MARKETING_VERSION="${{ needs.version.outputs.version }}" \
+            CURRENT_PROJECT_VERSION="${{ needs.version.outputs.version }}"
 
       - name: Archive .app
         run: |
