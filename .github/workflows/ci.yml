@@ -1,9 +1,9 @@
 name: Build, Version & Release
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types:
+      - closed
 
 permissions:
   contents: write
@@ -11,11 +11,22 @@ permissions:
 
 jobs:
   version:
+    if: github.event.pull_request.merged == true
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if ! echo "$BRANCH" | grep -qE '^(feat|fix)/.+'; then
+            echo "::error::Branch name '$BRANCH' does not match (feat|fix)/pattern. Aborting."
+            exit 1
+          fi
+          echo "branch_type=$(echo "$BRANCH" | cut -d'/' -f1)" >> "$GITHUB_OUTPUT"
+        id: branch
 
       - name: Bump version
         id: version
@@ -27,7 +38,12 @@ jobs:
             MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
             MINOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f2)
             PATCH=$(echo "$LATEST" | sed 's/v//' | cut -d. -f3)
-            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            BRANCH_TYPE="${{ steps.branch.outputs.branch_type }}"
+            if [ "$BRANCH_TYPE" = "feat" ]; then
+              VERSION="$MAJOR.$((MINOR + 1)).0"
+            else
+              VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -57,6 +73,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
 
   build:
+    if: github.event.pull_request.merged == true
     needs: version
     runs-on: macos-26
     steps:
@@ -96,6 +113,7 @@ jobs:
           path: dist/ZAILimitsMonitor.zip
 
   release:
+    if: github.event.pull_request.merged == true
     needs: [version, build]
     runs-on: macos-26
     steps:
