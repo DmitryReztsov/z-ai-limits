@@ -24,7 +24,6 @@ struct SettingsView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.blue)
                 .disabled(apiKey.isEmpty)
 
                 Button("Delete") {
