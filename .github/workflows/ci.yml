@@ -18,6 +18,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if ! echo "$BRANCH" | grep -qE '^(feat|fix)/.+'; then
+            echo "::error::Branch name '$BRANCH' does not match (feat|fix)/pattern. Aborting."
+            exit 1
+          fi
+          echo "branch_type=$(echo "$BRANCH" | cut -d'/' -f1)" >> "$GITHUB_OUTPUT"
+        id: branch
+
       - name: Bump version
         id: version
         run: |
