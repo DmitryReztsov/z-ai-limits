@@ -47,19 +47,6 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Update Info.plist version
-        run: |
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ steps.version.outputs.version }}" ZAILimitsMonitor/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ steps.version.outputs.version }}" ZAILimitsMonitor/Info.plist
-
-      - name: Commit version bump
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ZAILimitsMonitor/Info.plist
-          git commit -m "Bump version to ${{ steps.version.outputs.version }} [skip ci]"
-          git push
-
       - name: Create tag
         run: |
           if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
@@ -98,7 +85,9 @@ jobs:
             -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
-            CODE_SIGN_STYLE=Manual
+            CODE_SIGN_STYLE=Manual \
+            CFBundleShortVersionString="${{ needs.version.outputs.version }}" \
+            CFBundleVersion="${{ needs.version.outputs.version }}"
 
       - name: Archive .app
         run: |
