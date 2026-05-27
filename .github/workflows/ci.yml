@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   version:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,11 +58,14 @@ jobs:
 
   build:
     needs: version
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
         with:
           ref: v${{ needs.version.outputs.version }}
+
+      - name: Select Xcode 26.5
+        run: sudo xcode-select -s /Applications/Xcode_26.5.app/Contents/Developer
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -94,7 +97,7 @@ jobs:
 
   release:
     needs: [version, build]
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/download-artifact@v4
         with:
